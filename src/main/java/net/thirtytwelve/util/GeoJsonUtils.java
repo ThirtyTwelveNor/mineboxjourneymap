@@ -1,6 +1,7 @@
 package net.thirtytwelve.util;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.thirtytwelve.config.Config;
@@ -12,9 +13,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static net.thirtytwelve.MineBoxJourneyMap.MOD_ID;
 
@@ -48,7 +51,7 @@ public class GeoJsonUtils {
                             System.out.println("Downloaded: " + map.id + "/" + markerId);
                             break;  // Found the right category, skip others
                         }
-                        TimeUnit.MILLISECONDS.sleep(50);
+                        //TimeUnit.MILLISECONDS.sleep(50);
                     }
                 }
             }
@@ -74,9 +77,29 @@ public class GeoJsonUtils {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                Path outputPath = outputDir.resolve(String.format("%s_%s_%s.geojson",
-                        mapName, category.isEmpty() ? "base" : category, marker));
-                Files.writeString(outputPath, response.body());
+                Path outputPath = outputDir.resolve(marker + ".geojson");
+                //Files.writeString(outputPath, response.body(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+
+                if (!Files.exists(outputPath)) {
+                    // First time seeing this marker - just write the downloaded content directly
+                    Files.writeString(outputPath, response.body());
+                } else {
+                    // Append to existing file
+                    String existingContent = Files.readString(outputPath);
+                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                    JsonObject existingRoot = gson.fromJson(existingContent, JsonObject.class);
+                    JsonArray existingFeatures = existingRoot.getAsJsonArray("features");
+
+                    // Parse new content and append its features
+                    JsonObject newRoot = gson.fromJson(response.body(), JsonObject.class);
+                    JsonArray newFeatures = newRoot.getAsJsonArray("features");
+                    newFeatures.forEach(existingFeatures::add);
+
+                    // Write back the combined content
+                    Files.writeString(outputPath, gson.toJson(existingRoot));
+                }
+
+                System.out.println("Successfully fetched: " + url);
                 return true;
             }
         } catch (Exception e) {
@@ -92,10 +115,12 @@ public class GeoJsonUtils {
         try {
             Files.createDirectories(outputFile.getParent());
             List<String> waypoints = new ArrayList<>();
-            Files.walk(inputDir)
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".geojson"))
-                    .forEach(path -> processGeoJsonFile(path, waypoints));
+
+            try (Stream<Path> paths = Files.walk(inputDir)) {
+                paths.filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".geojson"))
+                        .forEach(path -> processGeoJsonFile(path, waypoints));
+            }
 
             Files.write(outputFile, waypoints);
             System.out.println("Created waypoints file with " + waypoints.size() + " entries at: " + outputFile);
@@ -104,7 +129,6 @@ public class GeoJsonUtils {
             e.printStackTrace();
         }
     }
-
     private static void processGeoJsonFile(Path filePath, List<String> waypoints) {
         try {
             String content = Files.readString(filePath);
@@ -116,30 +140,33 @@ public class GeoJsonUtils {
             JsonArray features = root.getAsJsonArray("features");
             if (features.isEmpty()) return;
 
-            JsonObject firstFeature = features.get(0).getAsJsonObject();
-            if (firstFeature.getAsJsonObject("geometry").get("type").getAsString().equals("Polygon")) {
-                return;
-            }
-
-            String fileName = filePath.getFileName().toString();
-            String[] parts = fileName.split("_");
-            String mapName = parts[0];
-            String markerId = fileName.substring(0, fileName.length() - 8); // Remove .geojson
-
+            String markerId = filePath.getFileName().toString().replace(".geojson", "");
             Config config = Config.getInstance();
-            Config.MapConfig mapConfig = config.getMaps().stream()
-                    .filter(map -> map.id.equals(mapName))
-                    .findFirst()
-                    .orElse(new Config.MapConfig(mapName, "minecraft:" + mapName));
-
             String baseId = config.cleanMapPrefix(markerId);
             String displayName = config.getTranslation(baseId);
 
+            // Process each feature individually to respect its map property
             for (var feature : features) {
                 JsonObject featureObj = feature.getAsJsonObject();
                 JsonObject geometry = featureObj.getAsJsonObject("geometry");
 
                 if (!geometry.get("type").getAsString().equals("Point")) continue;
+
+
+                String mapName = featureObj.has("properties") &&
+                        featureObj.getAsJsonObject("properties").has("map") ?
+                        featureObj.getAsJsonObject("properties").get("map").getAsString() : "";
+
+                // Get the correct dimension for this feature's map
+                Config.MapConfig mapConfig = config.getMaps().stream()
+                        .filter(map -> map.id.equals(mapName))
+                        .findFirst()
+                        .orElse(null);
+
+                if (mapConfig == null) {
+                    System.err.println("Unknown map: " + mapName);
+                    continue;
+                }
 
                 JsonArray coords = geometry.getAsJsonArray("coordinates");
                 if (coords.size() != 3) continue;

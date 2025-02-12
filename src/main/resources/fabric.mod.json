@@ -20,6 +20,12 @@
 		],
 		"client": [
 			"net.thirtytwelve.MineBoxJourneyMapClient"
+		],
+		"journeymap": [
+			"net.thirtytwelve.MineBoxJourneyMapPlugin"
+		],
+		"modmenu": [
+			"net.thirtytwelve.ModMenuIntegration"
 		]
 	},
 	"mixins": [

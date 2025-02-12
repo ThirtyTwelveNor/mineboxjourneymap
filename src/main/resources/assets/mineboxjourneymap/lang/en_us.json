@@ -1,0 +1,9 @@
+{
+  "minebox.config.title": "MineBox JourneyMap Config",
+  "minebox.config.category.maps": "Maps",
+  "minebox.config.category.categories": "Categories",
+  "minebox.config.category.translations": "Translations",
+  "minebox.config.map.id": "Map ID %d",
+  "minebox.config.map.dimension": "Dimension %d",
+  "minebox.config.categories": "Categories"
+}

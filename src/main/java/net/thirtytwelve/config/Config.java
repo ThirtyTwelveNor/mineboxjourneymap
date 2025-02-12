@@ -7,11 +7,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static net.thirtytwelve.MineBoxJourneyMap.MOD_ID;
 
@@ -52,6 +48,7 @@ public class Config {
 // Bloons
         config.translations.put("kokoko_bloon", "bloon");
         config.translations.put("spawn_bloon", "bloon");
+        config.translations.put("log_banana", "🌲banana");
 
 /*
         // Plants
@@ -187,12 +184,31 @@ public class Config {
 
         return config;
     }
+    public void setMaps(List<MapConfig> maps) {
+        this.maps = new ArrayList<>(maps);
+    }
+
+    public void setCategories(List<String> categories) {
+        this.categories = new ArrayList<>(categories);
+    }
+
+    public void setTranslations(Map<String, String> translations) {
+        this.translations = new LinkedHashMap<>(translations);
+    }
+
+    public Map<String, String> getTranslations() {
+        return new LinkedHashMap<>(translations);
+    }
 
     public static Config getInstance() {
         if (INSTANCE == null) {
             INSTANCE = loadConfig();
         }
         return INSTANCE;
+    }
+
+    public static void reloadConfig() {
+        INSTANCE = null; // Clear the current instance
     }
 
     private static Config loadConfig() {
@@ -212,7 +228,7 @@ public class Config {
         }
     }
 
-    private static void saveConfig(Config config) {
+    public static void saveConfig(Config config) {
         try {
             Path configPath = getConfigPath();
             Files.createDirectories(configPath.getParent());
