@@ -73,8 +73,8 @@ public class Config {
         config.translations.put("ore_copper", "⛏copper");
         config.translations.put("ore_diamond", "⛏diamond");
         config.translations.put("ore_dolomite", "⛏dolomite");
-        config.translations.put("ore_iron", "⛏iron ore");
-        config.translations.put("ore_lapis_lazuli", "⛏lapis lazuli");
+        config.translations.put("ore_iron", "⛏iron");
+        config.translations.put("ore_lapis_lazuli", "⛏lapis");
         config.translations.put("ore_liquid_diamond", "⛏liquid diamond");
         config.translations.put("ore_manganese", "⛏manganese");
         config.translations.put("ore_opale", "⛏opal");

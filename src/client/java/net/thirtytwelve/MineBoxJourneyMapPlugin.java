@@ -8,9 +8,7 @@ import journeymap.api.v2.common.waypoint.WaypointGroup;
 import journeymap.api.v2.common.waypoint.WaypointFactory;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.thirtytwelve.MineBoxJourneyMap.MOD_ID;
 
@@ -28,13 +26,15 @@ public class MineBoxJourneyMapPlugin implements IClientPlugin {
         this.jmAPI = api;
         MineBoxJourneyMapUtil.setPlugin(this);
     }
-
     public void fixWaypoints() {
         // Get all waypoints from our mod
         List<? extends Waypoint> myWaypoints = jmAPI.getWaypoints(MOD_ID);
 
         // Track created groups by name
         Map<String, WaypointGroup> groupsByName = new HashMap<>();
+
+        // First, collect all waypoint names and their counts
+        Map<String, List<Waypoint>> waypointsByName = new HashMap<>();
 
         for (Waypoint waypoint : myWaypoints) {
             // Skip if waypoint is already in one of our groups
@@ -43,26 +43,28 @@ public class MineBoxJourneyMapPlugin implements IClientPlugin {
             }
 
             String waypointName = waypoint.getName();
+            waypointsByName.computeIfAbsent(waypointName, k -> new ArrayList<>()).add(waypoint);
+        }
 
-            // Count matching waypoints that are:
-            // 1. From our mod (redundant since myWaypoints is already filtered)
-            // 2. Still in default group (not in one of our groups)
-            long matchingCount = myWaypoints.stream()
-                    .filter(w -> !jmAPI.getWaypointGroup(w.getGroupId()).getModId().equals(MOD_ID))
-                    .filter(w -> w.getName().equals(waypointName))
-                    .count();
+        // Process waypoints that have duplicates
+        for (Map.Entry<String, List<Waypoint>> entry : waypointsByName.entrySet()) {
+            String waypointName = entry.getKey();
+            List<Waypoint> waypoints = entry.getValue();
 
-            if (matchingCount > 1) {
+            if (waypoints.size() > 1) {
                 WaypointGroup group = groupsByName.get(waypointName);
                 if (group == null) {
                     group = WaypointFactory.createWaypointGroup(MOD_ID, waypointName);
+                    group.setEnabled(false);
+                    group.setColorOverride(true);
                     jmAPI.addWaypointGroup(group);
                     groupsByName.put(waypointName, group);
                 }
 
-                group.addWaypoint(waypoint);
-                group.setColorOverride(true);
-                group.setEnabled(false);
+                // Add all waypoints to the group
+                for (Waypoint waypoint : waypoints) {
+                    group.addWaypoint(waypoint);
+                }
             }
         }
     }

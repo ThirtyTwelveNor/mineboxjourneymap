@@ -223,12 +223,31 @@ public class GeoJsonUtils {
         }
 
         try {
-            // We only care about these parts, ignore the rest (aqua @p true)
-            String name = parts[2];
-            String dimension = parts[3];
-            int x = Integer.parseInt(parts[4]);
-            int y = Integer.parseInt(parts[5]);
-            int z = Integer.parseInt(parts[6]);
+            // Find dimension index by looking for the first part that matches dimension format
+            int dimensionIndex = -1;
+            for (int i = 3; i < parts.length - 3; i++) {
+                if (isDimensionFormat(parts[i])) {
+                    dimensionIndex = i;
+                    break;
+                }
+            }
+
+            if (dimensionIndex == -1) {
+                System.err.println("No valid dimension format found in line: " + line);
+                return;
+            }
+
+            // Combine all parts between index 2 and dimension index for the name
+            StringBuilder nameBuilder = new StringBuilder(parts[2]);
+            for (int i = 3; i < dimensionIndex; i++) {
+                nameBuilder.append(" ").append(parts[i]);
+            }
+            String name = nameBuilder.toString();
+
+            String dimension = parts[dimensionIndex];
+            int x = Integer.parseInt(parts[dimensionIndex + 1]);
+            int y = Integer.parseInt(parts[dimensionIndex + 2]);
+            int z = Integer.parseInt(parts[dimensionIndex + 3]);
 
             ParsedWaypoint waypoint = new ParsedWaypoint(name, dimension, x, y, z);
             PARSED_WAYPOINTS.add(waypoint);
@@ -237,5 +256,10 @@ public class GeoJsonUtils {
         } catch (Exception e) {
             System.err.println("Error processing line: " + line);
         }
+    }
+
+    private static boolean isDimensionFormat(String part) {
+        // Check if the part matches word:word or word_word:word_word format
+        return part.matches("^\\S+:\\S+$");
     }
 }
