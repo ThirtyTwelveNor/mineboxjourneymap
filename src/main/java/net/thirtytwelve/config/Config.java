@@ -45,12 +45,7 @@ public class Config {
         config.categories = Arrays.asList("tree", "flower", "ore", "monster", "");
 
         config.translations = new LinkedHashMap<>();
-// Bloons
-        config.translations.put("kokoko_bloon", "bloon");
-        config.translations.put("spawn_bloon", "bloon");
-        config.translations.put("log_banana", "🌲banana");
 
-/*
         // Plants
         config.translations.put("belladonna", "☘belladonna");
         config.translations.put("chamomille", "☘chamomille");
@@ -179,11 +174,9 @@ public class Config {
         config.translations.put("spidey", "♥spidey");
         config.translations.put("venomous_spidey", "♥venomous spidey");
 
-
- */
-
         return config;
     }
+
     public void setMaps(List<MapConfig> maps) {
         this.maps = new ArrayList<>(maps);
     }

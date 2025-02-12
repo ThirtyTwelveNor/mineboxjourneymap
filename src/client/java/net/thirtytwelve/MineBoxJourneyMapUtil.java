@@ -1,12 +1,8 @@
 package net.thirtytwelve;
 
-import journeymap.api.v2.client.JourneyMapPlugin;
+
 import net.thirtytwelve.util.GeoJsonUtils;
 
-import journeymap.api.v2.client.IClientAPI;
-import journeymap.api.v2.client.IClientPlugin;
-
-import net.thirtytwelve.MineBoxJourneyMapPlugin;
 
 public class MineBoxJourneyMapUtil {
     public static void devAction1() {
@@ -27,7 +23,10 @@ public class MineBoxJourneyMapUtil {
         // Implement your dev action 3 here
         System.err.println("3");
         if(plugin != null) {
-            //plugin.makeWaypoint();
+            GeoJsonUtils.processWaypoints();
+            for (GeoJsonUtils.ParsedWaypoint waypoint : GeoJsonUtils.PARSED_WAYPOINTS) {
+                plugin.makeWaypoint(waypoint.name(), waypoint.dimension(), waypoint.x(), waypoint.y(), waypoint.z());
+            }
         }
     }
 

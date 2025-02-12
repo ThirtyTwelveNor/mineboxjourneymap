@@ -120,7 +120,7 @@ public class ModMenuIntegration implements ModMenuApi {
         // Button 1
         devCategory.addEntry(entryBuilder.startTextDescription(Text.literal("")).build());
         devCategory.addEntry(entryBuilder.startBooleanToggle(
-                        Text.literal("Dev Action 1"),
+                        Text.literal("Click & save to Grab MineBoxMaps Coordinates"),
                         false)
                 .setSaveConsumer(value -> {
                     if (value) MineBoxJourneyMapUtil.devAction1();
@@ -130,7 +130,7 @@ public class ModMenuIntegration implements ModMenuApi {
         // Button 2
         devCategory.addEntry(entryBuilder.startTextDescription(Text.literal("")).build());
         devCategory.addEntry(entryBuilder.startBooleanToggle(
-                        Text.literal("Dev Action 2"),
+                        Text.literal("Click & save to Generate waypoint commands"),
                         false)
                 .setSaveConsumer(value -> {
                     if (value) MineBoxJourneyMapUtil.devAction2();
@@ -140,7 +140,7 @@ public class ModMenuIntegration implements ModMenuApi {
         // Button 3
         devCategory.addEntry(entryBuilder.startTextDescription(Text.literal("")).build());
         devCategory.addEntry(entryBuilder.startBooleanToggle(
-                        Text.literal("Dev Action 3"),
+                        Text.literal("Click & save to make all JourneyMap Waypoints"),
                         false)
                 .setSaveConsumer(value -> {
                     if (value) MineBoxJourneyMapUtil.devAction3();
@@ -150,7 +150,7 @@ public class ModMenuIntegration implements ModMenuApi {
         // Button 4
         devCategory.addEntry(entryBuilder.startTextDescription(Text.literal("")).build());
         devCategory.addEntry(entryBuilder.startBooleanToggle(
-                        Text.literal("Dev Action 4"),
+                        Text.literal("Click & save to Groupify all the waypoints in Journeymap"),
                         false)
                 .setSaveConsumer(value -> {
                     if (value) MineBoxJourneyMapUtil.devAction4();

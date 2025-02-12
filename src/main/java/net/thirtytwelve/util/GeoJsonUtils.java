@@ -6,17 +6,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.thirtytwelve.config.Config;
 import net.fabricmc.loader.api.FabricLoader;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static net.thirtytwelve.MineBoxJourneyMap.MOD_ID;
@@ -150,6 +147,10 @@ public class GeoJsonUtils {
                 JsonObject featureObj = feature.getAsJsonObject();
                 JsonObject geometry = featureObj.getAsJsonObject("geometry");
 
+                if (geometry.get("type").getAsString().equals("Polygon")) {
+                    //perhaps handle this in the future for mob spawning zones
+                    continue;
+                }
                 if (!geometry.get("type").getAsString().equals("Point")) continue;
 
 
@@ -182,6 +183,59 @@ public class GeoJsonUtils {
             }
         } catch (Exception e) {
             System.err.println("Error processing file " + filePath + ": " + e.getMessage());
+        }
+    }
+
+    public static final List<ParsedWaypoint> PARSED_WAYPOINTS = new ArrayList<>();
+
+    public record ParsedWaypoint(String name, String dimension, int x, int y, int z) {
+    }
+
+    public static void processWaypoints() {
+        Path waypointsFile = getWaypointsFile();
+        PARSED_WAYPOINTS.clear(); // Clear existing waypoints before loading
+
+        try {
+            if (!Files.exists(waypointsFile)) {
+                System.err.println("Waypoints file not found at: " + waypointsFile);
+                return;
+            }
+
+            List<String> lines = Files.readAllLines(waypointsFile);
+            for (String line : lines) {
+                processWaypointLine(line.trim());
+            }
+        } catch (Exception e) {
+            System.err.println("Error reading waypoint file: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void processWaypointLine(String line) {
+        if (line.isEmpty()) return;
+
+        String[] parts = line.split(" ");
+
+        // Basic validation - we need at least the command, name, dimension, and coordinates
+        if (parts.length < 7) {
+            System.err.println("Not enough parts in waypoint line: " + line);
+            return;
+        }
+
+        try {
+            // We only care about these parts, ignore the rest (aqua @p true)
+            String name = parts[2];
+            String dimension = parts[3];
+            int x = Integer.parseInt(parts[4]);
+            int y = Integer.parseInt(parts[5]);
+            int z = Integer.parseInt(parts[6]);
+
+            ParsedWaypoint waypoint = new ParsedWaypoint(name, dimension, x, y, z);
+            PARSED_WAYPOINTS.add(waypoint);
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid coordinates in line: " + line);
+        } catch (Exception e) {
+            System.err.println("Error processing line: " + line);
         }
     }
 }

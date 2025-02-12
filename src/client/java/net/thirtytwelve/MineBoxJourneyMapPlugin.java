@@ -26,43 +26,43 @@ public class MineBoxJourneyMapPlugin implements IClientPlugin {
     @Override
     public void initialize(IClientAPI api) {
         this.jmAPI = api;
+        MineBoxJourneyMapUtil.setPlugin(this);
     }
 
     public void fixWaypoints() {
-        // Get all waypoints
-        List<? extends Waypoint> allWaypoints = jmAPI.getAllWaypoints();
+        // Get all waypoints from our mod
+        List<? extends Waypoint> myWaypoints = jmAPI.getWaypoints(MOD_ID);
 
         // Track created groups by name
         Map<String, WaypointGroup> groupsByName = new HashMap<>();
 
-        for (Waypoint waypoint : allWaypoints) {
+        for (Waypoint waypoint : myWaypoints) {
+            // Skip if waypoint is already in one of our groups
+            if (jmAPI.getWaypointGroup(waypoint.getGroupId()).getModId().equals(MOD_ID)) {
+                continue;
+            }
+
             String waypointName = waypoint.getName();
 
-            // Count how many waypoints exist with this name
-            long matchingCount = allWaypoints.stream()
+            // Count matching waypoints that are:
+            // 1. From our mod (redundant since myWaypoints is already filtered)
+            // 2. Still in default group (not in one of our groups)
+            long matchingCount = myWaypoints.stream()
+                    .filter(w -> !jmAPI.getWaypointGroup(w.getGroupId()).getModId().equals(MOD_ID))
                     .filter(w -> w.getName().equals(waypointName))
                     .count();
 
-            // Only process if there are duplicates
             if (matchingCount > 1) {
-                // Try to get existing group first by name
                 WaypointGroup group = groupsByName.get(waypointName);
                 if (group == null) {
-                    group = jmAPI.getWaypointGroupByName(MOD_ID, waypointName);
-
-                    if (group == null) {
-                        // Create new group
-                        group = WaypointFactory.createWaypointGroup(MOD_ID, waypointName);
-                        jmAPI.addWaypointGroup(group);
-                    }
+                    group = WaypointFactory.createWaypointGroup(MOD_ID, waypointName);
+                    jmAPI.addWaypointGroup(group);
                     groupsByName.put(waypointName, group);
                 }
 
-                // Check if waypoint needs to be added to this group
-                String groupId = group.getGuid();
-                if (!waypoint.getGroupId().equals(groupId)) {
-                    group.addWaypoint(waypoint);
-                }
+                group.addWaypoint(waypoint);
+                group.setColorOverride(true);
+                group.setEnabled(false);
             }
         }
     }
@@ -73,10 +73,37 @@ public class MineBoxJourneyMapPlugin implements IClientPlugin {
         Waypoint waypoint = WaypointFactory.createClientWaypoint(MOD_ID, pos, name, dimension, true);
 
         // Set default colors (optional - you can modify these)
-        waypoint.setColor(0xFF0000); // Red color
+        waypoint.setColor(0x00FFFF); // Light blue color
         waypoint.setEnabled(true);
 
         // Add the waypoint to JourneyMap
         jmAPI.addWaypoint(MOD_ID, waypoint);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
