@@ -63,8 +63,7 @@ Basic waypoint commands:
 - Click & save to GroupFix all the waypoints in Journeymap
 
 ## License
-
-CC0-1.0
+GPL-3.0
 
 ## Credits
 
