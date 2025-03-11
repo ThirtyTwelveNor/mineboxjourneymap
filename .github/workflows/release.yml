@@ -1,0 +1,60 @@
+name: Create Release
+
+on:
+  workflow_dispatch: # No inputs needed
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: build.yml
+          workflow_conclusion: success
+          name: Artifacts
+          path: artifacts
+
+      - name: Extract Main JAR (Exclude Sources)
+        id: extract_jar
+        run: |
+          # Create a directory for the release files
+          mkdir -p release_files
+          
+          # Find and copy only the main JAR file (not the sources JAR)
+          MAIN_JAR=$(find artifacts -name "*.jar" ! -name "*-sources.jar" ! -name "*-dev.jar" | head -n 1)
+          
+          if [ -z "$MAIN_JAR" ]; then
+            echo "Could not find main JAR file"
+            exit 1
+          fi
+          
+          echo "Found main JAR: $MAIN_JAR"
+          cp "$MAIN_JAR" release_files/
+          
+          # Extract version from the JAR filename
+          JAR_BASENAME=$(basename "$MAIN_JAR")
+          echo "JAR filename: $JAR_BASENAME"
+          
+          # Extract version, assuming format like "modname-1.0.0.jar"
+          VERSION=$(echo $JAR_BASENAME | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -n 1)
+          
+          if [ -z "$VERSION" ]; then
+            echo "Could not extract version from filename, using 'latest'"
+            VERSION="latest"
+          fi
+          
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Version extracted: $VERSION"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
+          files: release_files/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
