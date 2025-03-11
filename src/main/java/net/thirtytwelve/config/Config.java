@@ -34,6 +34,8 @@ public class Config {
 
         config.maps = Arrays.asList(
                 new MapConfig("home_island", "minecraft:youruuid/main"),
+                new MapConfig("nether_island", "minecraft:youruuid/nether"),
+                new MapConfig("end_island", "minecraft:youruuid/end"),
                 new MapConfig("spawn", "minecraft:overworld"),
                 new MapConfig("kokoko", "minecraft:island_tropical"),
                 new MapConfig("quadra_plains", "minecraft:island_plain"),
@@ -42,11 +44,16 @@ public class Config {
                 new MapConfig("sandwhisper_dunes", "minecraft:island_desert")
         );
 
-        config.categories = Arrays.asList("tree", "flower", "ore", "monster", "");
+        config.categories = Arrays.asList("tree", "flower", "ore", "monster", "event/valentiny", "");
 
         config.translations = new LinkedHashMap<>();
 
         // Plants
+
+        config.translations.put("yellow_heartvine", "☘yellow heartvine");
+        config.translations.put("blue_heartvine", "☘blue heartvine");
+        config.translations.put("red_heartvine", "☘red heartvine");
+
         config.translations.put("belladonna", "☘belladonna");
         config.translations.put("chamomille", "☘chamomille");
         config.translations.put("clover", "☘clover");
@@ -74,6 +81,8 @@ public class Config {
         config.translations.put("ore_diamond", "⛏diamond");
         config.translations.put("ore_dolomite", "⛏dolomite");
         config.translations.put("ore_iron", "⛏iron");
+        config.translations.put("ore_gold", "⛏gold");
+        config.translations.put("ore_emerald", "⛏emerald");
         config.translations.put("ore_lapis_lazuli", "⛏lapis");
         config.translations.put("ore_liquid_diamond", "⛏liquid diamond");
         config.translations.put("ore_manganese", "⛏manganese");
@@ -113,12 +122,12 @@ public class Config {
         config.translations.put("treasure_mythic", "🗝mythic");
 
 // Fish
-        config.translations.put("bamboo_peak_fish", "🐠fish");
-        config.translations.put("frostbite_fortress_fish", "🐠fish");
-        config.translations.put("kokoko_fish", "🐠fish");
-        config.translations.put("quadra_plains_fish", "🐠fish");
-        config.translations.put("sandwhisper_dunes_fish", "🐠fish");
-        config.translations.put("spawn_fish", "🐠fish");
+        config.translations.put("bamboo_shoal", "🐠shoal");
+        config.translations.put("cold_shoal", "🐠shoal");
+        config.translations.put("deep_shoal", "🐠shoal");
+        config.translations.put("desert_shoal", "🐠shoal");
+        config.translations.put("plain_shoal", "🐠shoal");
+        config.translations.put("tropical_shoal", "🐠shoal");
 
 // Bloon
         config.translations.put("bamboo_peak_bloon", "🎈bloon");
@@ -147,6 +156,8 @@ public class Config {
 // NPCs and Monsters
         config.translations.put("bambooboo", "♥bambooboo");
         config.translations.put("bloomboo", "♥bloomboo");
+        config.translations.put("boogoo", "♥boogoo");
+        config.translations.put("blue_starfish", "♥blue starfish");
         config.translations.put("cat_goofish", "♥cat goofish");
         config.translations.put("chillolith", "♥chillolith");
         config.translations.put("clown_goofish", "♥clown goofish");
@@ -173,6 +184,13 @@ public class Config {
         config.translations.put("spicy_lava_bucket", "♥spicy lava bucket");
         config.translations.put("spidey", "♥spidey");
         config.translations.put("venomous_spidey", "♥venomous spidey");
+        config.translations.put("fungoo_dancer", "♥npc");
+        config.translations.put("frozehound", "♥npc");
+        config.translations.put("froztail", "♥npc");
+        config.translations.put("froztail_magus", "♥npc");
+        config.translations.put("logzilla", "♥npc");
+        config.translations.put("sporelord", "♥npc");
+
 
         return config;
     }
