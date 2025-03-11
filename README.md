@@ -13,7 +13,7 @@ A highly customizable JourneyMap addon that makes waypoints for MineBox.
 ## Installation
 
 1. Make sure you have the following prerequisites installed:
-   - Minecraft Fabric 1.21.3
+   - Minecraft Fabric 1.21.4
    - JourneyMap
    - ModMenu
    - Cloth Config

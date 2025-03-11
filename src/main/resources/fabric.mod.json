@@ -3,13 +3,13 @@
 	"id": "mineboxjourneymap",
 	"version": "${version}",
 	"name": "MineBoxJourneyMap",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "A mod that grabs everything from mineboxmaps.com and adds them as waypoints",
 	"authors": [
-		"Me!"
+		"ThirtyTwelve"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "mailto:mineboxjourneymap@thirtytwelve.net",
+		"sources": "https://github.com/ThirtyTwelveNor/mineboxjourneymap"
 	},
 	"license": "GPL-3.0 license",
 	"icon": "assets/mineboxjourneymap/icon.png",

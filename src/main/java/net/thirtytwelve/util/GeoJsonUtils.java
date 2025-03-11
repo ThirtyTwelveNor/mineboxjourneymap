@@ -22,26 +22,47 @@ import java.util.stream.Stream;
 
 import static net.thirtytwelve.MineBoxJourneyMap.MOD_ID;
 
+/**
+ * Utility class for downloading and processing GeoJSON data into waypoints.
+ * Handles background processing of map data for JourneyMap integration.
+ */
 public class GeoJsonUtils {
-    // Thread pool for background operations
+    /** Thread pool for background operations */
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(4);
 
+    /** List of parsed waypoints available for use */
     public static final List<ParsedWaypoint> PARSED_WAYPOINTS = new ArrayList<>();
 
+    /**
+     * Gets the mod's config directory.
+     *
+     * @return Path to the mod's config directory
+     */
     private static Path getConfigDir() {
         return FabricLoader.getInstance().getConfigDir().resolve(MOD_ID);
     }
 
+    /**
+     * Gets the directory where GeoJSON files are stored.
+     *
+     * @return Path to the GeoJSON directory
+     */
     private static Path getGeoJsonDir() {
         return getConfigDir().resolve("geojson_data");
     }
 
+    /**
+     * Gets the path to the generated waypoints file.
+     *
+     * @return Path to the waypoints file
+     */
     private static Path getWaypointsFile() {
         return getConfigDir().resolve("waypoints.txt");
     }
 
     /**
-     * Downloads all GeoJson files in a background thread
+     * Downloads all GeoJSON files in a background thread.
+     * Fetches marker data from the MineBox Maps service.
      */
     public static void downloadAllGeoJson() {
         Thread downloadThread = new Thread(() -> {
@@ -68,7 +89,7 @@ public class GeoJsonUtils {
                             for (String category : config.getCategories()) {
                                 // Small delay between requests to prevent rate limiting
                                 try {
-                                    Thread.sleep(100); // Slightly increased delay
+                                    Thread.sleep(100);
                                 } catch (InterruptedException e) {
                                     Thread.currentThread().interrupt();
                                 }
@@ -101,7 +122,9 @@ public class GeoJsonUtils {
                     }
                 }
 
-                System.out.println("Download complete! Downloaded " + totalDownloaded.get() + " files");
+                String message = "Downloaded " + totalDownloaded.get() + " files";
+                System.out.println("Download complete! " + message);
+                showToast("Download Complete", message);
             } catch (Exception e) {
                 System.err.println("Error downloading files: " + e.getMessage());
                 e.printStackTrace();
@@ -111,6 +134,16 @@ public class GeoJsonUtils {
         downloadThread.start();
     }
 
+    /**
+     * Attempts to download a specific GeoJSON file.
+     *
+     * @param client The HTTP client to use
+     * @param outputDir The directory to save the file to
+     * @param mapName The map ID
+     * @param marker The marker ID
+     * @param category The category path
+     * @return true if download was successful, false otherwise
+     */
     private static boolean tryDownloadGeoJson(HttpClient client, Path outputDir,
                                               String mapName, String marker, String category) {
         try {
@@ -160,7 +193,8 @@ public class GeoJsonUtils {
     }
 
     /**
-     * Parses GeoJson files to waypoints file in a background thread
+     * Parses GeoJSON files to waypoints file in a background thread.
+     * Processes downloaded GeoJSON into a format usable by JourneyMap.
      */
     public static void parseToWaypoints() {
         Thread parseThread = new Thread(() -> {
@@ -207,7 +241,10 @@ public class GeoJsonUtils {
                 }
 
                 Files.write(outputFile, waypoints);
+
+                String message = "Created " + waypoints.size() + " waypoints";
                 System.out.println("Created waypoints file with " + waypoints.size() + " entries at: " + outputFile);
+                showToast("Waypoints Processed", message);
             } catch (Exception e) {
                 System.err.println("Error processing files: " + e.getMessage());
                 e.printStackTrace();
@@ -217,6 +254,12 @@ public class GeoJsonUtils {
         parseThread.start();
     }
 
+    /**
+     * Processes a single GeoJSON file into waypoint commands.
+     *
+     * @param filePath Path to the GeoJSON file
+     * @param waypoints List to add the generated waypoint commands to
+     */
     private static void processGeoJsonFile(Path filePath, List<String> waypoints) {
         try {
             String content = Files.readString(filePath);
@@ -239,7 +282,7 @@ public class GeoJsonUtils {
                 JsonObject geometry = featureObj.getAsJsonObject("geometry");
 
                 if (geometry.get("type").getAsString().equals("Polygon")) {
-                    //perhaps handle this in the future for mob spawning zones
+                    // Perhaps handle this in the future for mob spawning zones
                     continue;
                 }
                 if (!geometry.get("type").getAsString().equals("Point")) continue;
@@ -276,12 +319,15 @@ public class GeoJsonUtils {
         }
     }
 
+    /**
+     * Record representing a parsed waypoint with all necessary data.
+     */
     public record ParsedWaypoint(String name, String dimension, int x, int y, int z) {
     }
 
     /**
-     * Process waypoints on the main thread for UI compatibility
-     * This method runs synchronously
+     * Process waypoints on the main thread for UI compatibility.
+     * This method runs synchronously to load waypoints from the file.
      */
     public static void processWaypoints() {
         Path waypointsFile = getWaypointsFile();
@@ -298,13 +344,21 @@ public class GeoJsonUtils {
                 processWaypointLine(line.trim());
             }
 
+            String message = "Loaded " + PARSED_WAYPOINTS.size() + " waypoints";
             System.out.println("Processed " + PARSED_WAYPOINTS.size() + " waypoints");
+            showToast("Waypoints Ready", message);
         } catch (Exception e) {
             System.err.println("Error reading waypoint file: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
+    /**
+     * Processes a single line from the waypoints file.
+     * Parses command format into a structured waypoint object.
+     *
+     * @param line The waypoint command line to process
+     */
     private static void processWaypointLine(String line) {
         if (line.isEmpty()) return;
 
@@ -352,14 +406,31 @@ public class GeoJsonUtils {
         }
     }
 
+    /**
+     * Checks if a string matches the dimension format pattern.
+     *
+     * @param part The string to check
+     * @return true if the string matches the dimension format, false otherwise
+     */
     private static boolean isDimensionFormat(String part) {
         // Check if the part matches word:word or word_word:word_word format
         return part.matches("^\\S+:\\S+$");
     }
 
     /**
-     * Shuts down the executor service, call when mod is unloaded
+     * Shuts down the executor service.
      */
+    private static void showToast(String title, String message) {
+        try {
+            // Use reflection to avoid direct dependency
+            Class<?> utilClass = Class.forName("net.thirtytwelve.MineBoxJourneyMapUtil");
+            java.lang.reflect.Method showToastMethod = utilClass.getMethod("showToast", String.class, String.class);
+            showToastMethod.invoke(null, title, message);
+        } catch (Exception e) {
+            // Fail silently if the toast can't be shown
+            System.err.println("Could not show toast: " + e.getMessage());
+        }
+    }
     public static void shutdown() {
         EXECUTOR.shutdown();
     }
