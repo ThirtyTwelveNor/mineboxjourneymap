@@ -4,18 +4,7 @@
 # against bad commits.
 
 name: build
-on:
-  pull_request:
-  push:
-  workflow_dispatch:  # Added to allow manual triggering
-    inputs:
-      release:
-        description: 'Create a release (true/false)'
-        required: true
-        default: 'false'
-      version:
-        description: 'Version to release (e.g., 1.0.0)'
-        required: false
+on: [pull_request, push]
 
 jobs:
   build:
@@ -38,50 +27,11 @@ jobs:
           distribution: 'microsoft'
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
-
-      # Extract version from tag or input
-      - name: Extract version
-        id: get_version
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true' && github.event.inputs.version != '' }}
-        run: echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-
-      # Update gradle.properties version if releasing
-      - name: Update gradle.properties version
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true' && github.event.inputs.version != '' }}
-        run: |
-          sed -i "s/^version = .*/version = ${{ env.VERSION }}/" gradle.properties
-
-      # Commit and push version changes if releasing manually
-      - name: Commit and push version changes
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true' && github.event.inputs.version != '' }}
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git add gradle.properties
-          git commit -m "Release version ${{ env.VERSION }}"
-          git tag -a "v${{ env.VERSION }}" -m "Release version ${{ env.VERSION }}"
-          git push origin "v${{ env.VERSION }}"
-
       - name: build
         run: ./gradlew build
-
       - name: capture build artifacts
         if: ${{ matrix.java == '21' }} # Only upload artifacts built from latest java
         uses: actions/upload-artifact@v4
         with:
           name: Artifacts
           path: build/libs/
-
-      # Create Release if manually triggered with release=true or if a tag was pushed
-      - name: Create Release
-        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true' && github.event.inputs.version != '') || startsWith(github.ref, 'refs/tags/v') }}
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.VERSION != '' && format('v{0}', env.VERSION) || github.ref_name }}
-          name: ${{ env.VERSION != '' && format('Release v{0}', env.VERSION) || format('Release {0}', github.ref_name) }}
-          draft: false
-          prerelease: false
-          files: |
-            build/libs/*.jar
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
